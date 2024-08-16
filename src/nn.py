@@ -87,3 +87,24 @@ class CNN(NN):
             x = layer(x)
         x = jnp.reshape(x, (10, 10))
         return x
+    
+class MLP(NN):
+    
+    def __init__(self, key: Optional[jrandom.PRNGKey] = jrandom.PRNGKey(0)):
+        keys = jrandom.split(key, 2)
+
+        self.layers = [
+            eqx.nn.Linear(200, 100, key=keys[0]),
+            jax.nn.relu,
+            eqx.nn.Linear(100, 50, key=keys[1]),
+            jax.nn.relu,
+            eqx.nn.Linear(50, 100, key=keys[1]),
+        ]
+
+    def __call__(self, A: Float[Array, "b 10 10"], B: Float[Array, "b 10 10"]) -> Float[Array, "b 10 10"]:
+        x = jnp.stack([A, B], axis=0)
+        x = jnp.reshape(x, (200,))
+        for layer in self.layers:
+            x = layer(x)
+        x = jnp.reshape(x, (10, 10))
+        return x

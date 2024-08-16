@@ -85,7 +85,8 @@ if __name__ == '__main__':
     print("[INFO] Training CNN")
     print("[INFO] Network Structure:\n")
     print(CNN(), "\n")
-    
+
     net = CNN()
+    # net = MLP()
 
     net = train(net, opt.adam(LEARNING_RATE), EPOCHS, PRINT_EVERY)
