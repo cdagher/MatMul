@@ -9,7 +9,7 @@ from equinox import Module
 
 import optax as opt
 
-from nn import *
+from src.nn import *
 
 import numpy as np
 

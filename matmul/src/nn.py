@@ -10,7 +10,8 @@ from jax import random as jrandom
 import equinox as eqx
 from equinox import Module
 
-from split_layer import *
+from src.split_layer import split_layer
+
 
 class NN(Module):
     '''
