@@ -80,13 +80,27 @@ def train(
         if s % print_every == 0 or s == steps - 1:
             print(f"Step {s}, Loss: {loss_value}")
 
+    return model
+
 
 if __name__ == '__main__':
     print("[INFO] Training CNN")
-    print("[INFO] Network Structure:\n")
-    print(CNN(), "\n")
 
     net = CNN()
     # net = MLP()
 
+    print("[INFO] Network Structure:\n")
+    print(net, "\n")
+
     net = train(net, opt.adam(LEARNING_RATE), EPOCHS, PRINT_EVERY)
+
+    print("\n[INFO] Splitting Layer 5\n")
+    net.split_layer(5, 25)
+
+    print(net, "\n")
+
+    net = train(net, opt.adam(LEARNING_RATE), 2*EPOCHS, PRINT_EVERY)
+
+    # net.split_layer(7, 10)
+
+    # net = train(net, opt.adam(LEARNING_RATE), EPOCHS, PRINT_EVERY)
