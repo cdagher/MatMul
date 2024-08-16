@@ -10,6 +10,8 @@ from jax import random as jrandom
 import equinox as eqx
 from equinox import Module
 
+from split_layer import *
+
 class NN(Module):
     '''
     A base class which extends the equinox Module class to provide some useful
@@ -24,7 +26,16 @@ class NN(Module):
     
     def replace_layer(self, index: int, layer: Module):
         self.layers[index] = layer
-        self.flatten()
+        # TODO: fix flatten() and uncomment the line below
+        # self.flatten()
+
+    def split_layer(self, index: int, cut: int):
+        layer = self.layers[index]
+        if isinstance(layer, eqx.nn.Linear):
+            split = split_layer.from_layer(layer, cut)
+            self.replace_layer(index, split)
+        else:
+            raise TypeError('Only Linear layers can be split')
 
     def __copy__(self):
         cls = self.__class__

@@ -35,8 +35,6 @@ class split_layer(Module):
     
     @classmethod
     def from_layer(cls, W: Module, cut: int):
-        layers = []
-
         U, S, V = jnp.linalg.svd(W.weight)
 
         W_l_p = jnp.zeros((U.shape[0], cut))
