@@ -10,6 +10,8 @@ from jax import random as jrandom
 import equinox as eqx
 from equinox import Module
 
+import numpy as np
+
 from src.split_layer import split_layer
 
 
@@ -22,13 +24,20 @@ class NN(Module):
     layers: List[Module]
 
     def flatten(self):
-        l = sum(self.layers, [])
-        self.layers = l
+        layers = []
+        for l in self.layers:
+            if isinstance(l, split_layer):
+                layers.append(l.layers[0])
+                layers.append(l.layers[1])
+            else:
+                layers.append(l)
+
+        self.layers.clear()
+        self.layers.extend(layers)
     
     def replace_layer(self, index: int, layer: Module):
         self.layers[index] = layer
-        # TODO: fix flatten() and uncomment the line below
-        # self.flatten()
+        self.flatten()
 
     def split_layer(self, index: int, cut: int):
         layer = self.layers[index]
@@ -37,6 +46,17 @@ class NN(Module):
             self.replace_layer(index, split)
         else:
             raise TypeError('Only Linear layers can be split')
+        
+    def layer_singular_values(self, index: int) -> Array:
+        layer = self.layers[index]
+        if isinstance(layer, eqx.nn.Linear) is False:
+            raise TypeError('Only Linear layers supported')
+        
+        weights: Array = layer.weight
+
+        _, s, _ = jnp.linalg.svd(weights)
+
+        return s
 
     def __copy__(self):
         cls = self.__class__
@@ -70,6 +90,8 @@ class NN(Module):
                 if hasattr(layer, 'use_bias'):
                     if layer.use_bias:
                         n += jnp.sum(jnp.array(list(layer.bias.shape))).item()
+                if hasattr(layer, 'param_count'):
+                    n += layer.param_count()
         return n
     
     def __str__(self):
@@ -120,3 +142,19 @@ class MLP(NN):
             x = layer(x)
         x = jnp.reshape(x, (10, 10))
         return x
+
+class MatVec(NN):
+    '''
+    A feed forward NN which approximates a matrix for matrix-vector multiplication.
+
+    Input is a 100-dimensional vector, output is a 10-dimensional vector.
+    '''
+
+    def __init__(self, key: Optional[jrandom.PRNGKey] = jrandom.PRNGKey(0)):
+        keys = jrandom.split(key, 2)
+
+        self.layers = [
+            eqx.nn.Linear(100, 50, key=keys[0]),
+            jax.nn.relu,
+            eqx.nn.Linear(50, 10, key=keys[1]),
+        ]
