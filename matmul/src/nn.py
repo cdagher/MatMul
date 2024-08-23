@@ -81,17 +81,13 @@ class NN(Module):
         return cpy
     
     def param_count(self) -> int:
+        params, _ = eqx.partition(self, eqx.is_array)
+        params_list: List[Array] = jax.tree_leaves(params)
+
         n = 0
-        for layer in self.layers:
-            if isinstance(layer, eqx.Module):
-                if hasattr(layer, 'weight'):
-                    shape = list(layer.weight.shape)
-                    n += jnp.prod(jnp.array(shape)).item()
-                if hasattr(layer, 'use_bias'):
-                    if layer.use_bias:
-                        n += jnp.sum(jnp.array(list(layer.bias.shape))).item()
-                if hasattr(layer, 'param_count'):
-                    n += layer.param_count()
+        for param in params_list:
+            n += np.prod(param.shape).item()
+
         return n
     
     def __str__(self):
